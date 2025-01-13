@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基于机器学习技术的学生心理测评系统登录页</title>
+    <!-- 引入ElementUI的样式库 -->
+    <link rel="stylesheet" href="{{ url_for('static',filename='element-ui/lib/theme-chalk/index.css') }}">
+    <!-- 通过源码引入Vue.js -->
+    <script src="{{ url_for('static',filename='vue.js') }}"></script>
+    <!-- 通过源码引入ElementUI的JavaScript代码库 -->
+    <script src="{{ url_for('static',filename='element-ui/lib/index.js') }}"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-image: url("{{ url_for('static',filename='images/background-login.jpg') }}");
+            background-size: 100%;
+        }
+        #vue-app{
+            background-color: white;
+            width: 400px;
+            height: 350px;
+            margin: 80px auto;
+            text-align: center;
+            border-radius: 5%;
+            border: 1px solid black;
+        }
+        #vue-app h2{
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+        .login-form {
+            margin: 0 auto; 
+            width: 80%;
+        }
+        .page-title{
+            margin: 75px auto;
+            text-align: center;
+            color: black;
+            letter-spacing: 6px;
+            font-size: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-title">
+        基于机器学习技术的学生心理测评系统
+    </div>
+    <div id="vue-app">
+        <h2>登录:进入您的内心世界</h2>
+        <el-form label-position="left" class="login-form" label-width="80px" v-model="form" :http-request="login">
+            <el-form-item label="选择角色">
+                <el-select v-model="form.role" placeholder="请选择登录角色">
+                    <el-option value="user" label="用户"></el-option>
+                    <el-option value="manager" label="管理员"></el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item label="用户账号">
+              <el-input placeholder="请输入账号" v-model="form.account"></el-input>
+            </el-form-item>
+            <el-form-item label="用户密码">
+              <el-input type="password" prefix-icon="el-icon-lock" placeholder="请输入密码" show-password v-model="form.password"></el-input>
+            </el-form-item>
+            <el-form-item style="float: left;">
+                <el-button type="primary" @click="login">登录系统</el-button>
+                <el-button type="primary" @click="registerDialogVisible=true">注册账号</el-button>
+            </el-form-item>
+          </el-form>
+          
+          <!-- 注册账户时点击出现的注册对话框 -->
+          <el-dialog title="注册一个用户账号" :visible.sync="registerDialogVisible" width="40%">
+            <el-form v-model="registerForm" :http-request="register">
+                <el-form-item label="选择角色">
+                    <el-select v-model="registerForm.role" placeholder="请选择登录角色">
+                        <el-option value="user" label="用户"></el-option>
+                        <el-option value="manager" label="管理员"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="用户账号" :label-width="formLabelWidth">
+                  <el-input v-model="registerForm.account" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-row>
+                    <div style="color:red; font-size: 10px; line-height: 10px; height: 10px; margin: 0; padding: 0;" v-if="!accountLengthFit">
+                        当前账号的长度不符合规范
+                    </div>
+                </el-row>
+                <el-form-item label="账号密码" :label-width="formLabelWidth">
+                  <el-input v-model="registerForm.password" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-row>
+                    <div style="color:red; font-size: 10px; line-height: 10px; height: 10px; margin: 0; padding: 0;" v-if="!passwordContentFit">
+                        密码必须同时包含数字和字母
+                    </div>
+                </el-row>
+                <el-form-item label="你的昵称" :label-width="formLabelWidth">
+                    <el-input v-model="registerForm.nickname" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="你的年龄" :label-width="formLabelWidth">
+                    <el-input v-model="registerForm.age" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="年级" :label-width="formLabelWidth" v-if="registerForm.role=='user'">
+                    <el-input v-model="e1" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="学院" :label-width="formLabelWidth" v-if="registerForm.role=='user'">
+                    <el-input v-model="e2" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="专业" :label-width="formLabelWidth" v-if="registerForm.role=='user'">
+                    <el-input v-model="e3" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-row><el-button type="submit" @click="register">立刻注册</el-button></el-row>
+            </el-form>
+          </el-dialog>
+    </div>
+    <script>
+        new Vue({
+            el: "#vue-app", 
+            data(){
+                return {
+                    registerDialogVisible: false, 
+                    e1: "", 
+                    e2: "", 
+                    e3: "", 
+                    accountLengthFit: true, 
+                    passwordContentFit: true, 
+                    registerForm: {
+                        // 用户注册所需要的表单
+                        account: "", 
+                        password: "",
+                        nickname: "", 
+                        age: "",
+                        role: ""
+                    },
+                    form: {
+                        role: "", 
+                        account: "", 
+                        password: ""
+                    }
+                };
+            },
+            
+            methods: {
+                async login(){
+                    // 系统登录时的响应函数
+                    let loginForm = new FormData();
+                    // 将登录需要验证的表单数据加入登录表单
+                    loginForm.append("role", this.form.role);
+                    loginForm.append("account", this.form.account);
+                    loginForm.append("password", this.form.password);
+                    const loginResult = await axios.post("http://127.0.0.1:5000/login/login", loginForm);
+                    if (loginResult.data.success){
+                        // 成功登录前,首先将用户的登录信息存储到浏览器本地的localStorage中 
+                        window.localStorage.setItem("account", this.form.account);
+                        if (this.form.role == "user")
+                            // 如果登录角色是用户,则跳转到用户的界面
+                            window.location.href = "http://127.0.0.1:5000/system";
+                        else if (this.form.role == "manager")
+                            // 如果登录角色是系统管理员,则跳转到系统管理员的界面 
+                            window.location.href = "http://127.0.0.1:5000/manager";
+                    }
+                    else{
+                        this.$message({message: "密码错误,请检查", type: "error"});
+                        return; 
+                    }
+                },
+
+                // 注册新用户时的响应函数
+                async register(){
+                    // 检验当前注册账户的账户名长度是否大于10位
+                    this.accountLengthFit = this.registerForm.account.length >= 10;
+                    if (! this.accountLengthFit) 
+                        return; 
+                    // 检验当前密码是否同时包含了数字字符和大小写字母字符
+                    let hasNumber = false, hasSmallLetter = false, hasBigLetter = false;
+                    for (i = 0; i < this.registerForm.password.length; i++){
+                        currentChar = this.registerForm.password.charAt(i);
+                        hasBigLetter = hasBigLetter || (currentChar >= "A" && currentChar <= "Z");
+                        hasSmallLetter = hasSmallLetter || (currentChar >= "a" && currentChar <= "z");
+                        hasNumber = hasNumber || (currentChar >= "0" && currentChar <= "9");
+                        if (hasNumber && hasBigLetter && hasSmallLetter)
+                            break;
+                    }
+                    if (! (hasNumber && hasBigLetter && hasSmallLetter)){
+                        this.passwordContentFit = false;
+                        return; 
+                    }
+                    let registerForm = new FormData();
+                    registerForm.append("account", this.registerForm.account);
+                    registerForm.append("password", this.registerForm.password);
+                    registerForm.append("nickname", this.registerForm.nickname);
+                    registerForm.append("age", this.registerForm.age);
+                    registerForm.append("role", this.registerForm.role);
+                    const registerResult = await axios.post("http://127.0.0.1:5000/login/register", registerForm);
+                    if (registerResult.data.success) {
+                        this.$message({message: "注册成功,现在可以登录了！", type: "success"});
+                        this.registerDialogVisible = false;
+                    }
+                    else{
+                        this.$message({message: "当前账户已经被人注册了,请更换账户名称", type: "error"});
+                    }
+                },
+            },
+        })
+    </script>
+</body>
+</html>

@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基于机器学习技术的学生心理测评系统: 用户使用页</title>
+    <!-- 引入ElementUI的样式库 -->
+    <link rel="stylesheet" href="{{ url_for('static',filename='element-ui/lib/theme-chalk/index.css') }}">
+    <!-- 通过源码引入Vue.js -->
+    <script src="{{ url_for('static',filename='vue.js') }}"></script>
+    <!-- 通过源码引入ElementUI的JavaScript代码库 -->
+    <script src="{{ url_for('static',filename='element-ui/lib/index.js') }}"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        *{
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div id="vue-app">
+        <div style="display: none;" v-if="firstRender">[[ loadCurrentUserInformation() ]]</div>
+        <el-container style="height: 100%; width: 100%; padding: 0; margin: 0;">
+            <el-header style="height: 20%; padding: 0; margin: 0;">
+                <el-container>
+                    <el-aside style="width: 80%; margin: 0; padding: 0; overflow-y: hidden;">
+                      <el-menu 
+                       :default-active="activeIndex" 
+                       class="el-menu-demo" 
+                       mode="horizontal" 
+                       @select="currentPageChange"
+                       background-color="#545c64"
+                       text-color="#fff"
+                       active-text-color="#ffd04b">
+                        <el-menu-item index="1">在线心理测评</el-menu-item>
+                        <el-menu-item index="2">我的测评记录</el-menu-item>
+                        <el-menu-item index="3">个人信息管理</el-menu-item>
+                        <el-menu-item index="4">心理咨询与预约</el-menu-item>
+                        <el-menu-item index="5">心理咨询预约记录</el-menu-item>
+                      </el-menu>
+                    </el-aside>
+                    <el-main style="border-bottom: 1px solid #d3d3d3; 
+                     margin: 0; 
+                     padding: 0;
+                     display: flex; 
+                     justify-content: center; 
+                     background-color: #545c64;">
+                        <el-button 
+                         type="text" 
+                         style="padding: 0; margin: 0; float: right; color: white;"
+                         v-model="currentInformation.nickname"
+                         @click="activeIndex='3'">
+                         Hello, [[ currentInformation.nickname ]]
+                        </el-button>
+                        <el-link type="warning"
+                         type="text"
+                         style="padding: 0; margin: 0; margin-left: 10px; float: right; color: orange;"
+                         href="http://127.0.0.1:5000/">
+                         [退出登录]
+                        </el-link>
+                    </el-main>
+                </el-container>
+            </el-header>
+
+            <el-main>
+                <!-- 在线心理测评主界面 -->
+                <el-contain v-if="activeIndex == '1'" 
+                 style="height: 100%; display: flex; flex-direction: row; justify-content: center; align-items: center;">
+                    <div style="height: 25%; width: 25%; margin: 0 auto; text-align: center;">
+                        <el-card style="height: 100%; width: 100%; margin: 0 auto; text-align: center;">
+                            <el-image 
+                                src="{{ url_for('static',filename='images/card1.jpg') }}"
+                                style="margin: 0 auto; width: 250px; opacity: 0.8;">
+                            </el-image>
+                        </el-card>
+                        <el-row>
+                            <el-button type="text" @click="changeTestPageDialogVisible=true">上一个项目</el-button>
+                        </el-row>
+                    </div>
+
+                    <el-card style="height: 50%; width: 50%; margin: 0 auto; text-align: center;">
+                    <el-image 
+                        src="{{ url_for('static',filename='images/card1.jpg') }}"
+                        style="margin: 0 auto; width: 500px;">
+                    </el-image>
+                        <div style="padding: 14px;">
+                          <span><b>基于机器学习技术的多维度心理测试</b></span>
+                          <p style="text-align: left; text-indent: 2em; font-size: 12px; padding-top: 10px;">
+                          采用机器学习技术实现，心理测评量表包含了来自身体状况、学业状况等方面的18个问题，并
+                          采用先进的机器学习模型对受试者的<b>焦虑水平、抑郁水平和压力水平</b>进行预测，模型预测的准确度在90%以上。
+                          </p>
+                          <div class="bottom clearfix">
+                            <el-button type="text" class="button" @click="beginTesting('machineLearningTestV1')">开始测评</el-button>
+                          </div>
+                        </div>
+                    </el-card>
+
+                    <div style="height: 25%; width: 25%; margin: 0 auto; text-align: center;">
+                        <el-card style="height: 100%; width: 100%; margin: 0 auto; text-align: center;">
+                            <el-image 
+                                src="{{ url_for('static',filename='images/card1.jpg') }}"
+                                style="margin: 0 auto; width: 250px; opacity: 0.8;">
+                            </el-image>
+                        </el-card>
+                        <el-row>
+                            <el-button type="text" @click="changeTestPageDialogVisible=true">下一个项目</el-button>
+                        </el-row>
+                    </div>
+                </el-contain>
+
+                <!-- 心理测评历史记录界面 -->
+                <el-contain v-if="activeIndex == '2'" style="height: 100%;">
+                    <el-form :inline="true" style="display: flex; align-items: center; justify-content: center;">
+                        <el-form-item label="起始日期">
+                            <el-date-picker type="date" v-model="searchForm.startDate" placeholder="选择起始日期"></el-date-picker>
+                        </el-form-item>
+                        <el-form-item label="截止日期">
+                            <el-date-picker type="date" v-model="searchForm.endDate" placeholder="选择截止日期"></el-date-picker>
+                        </el-form-item>
+                        <el-form-item label="心理测试名称">
+                          <el-select placeholder="选择心理测试名称" v-model="searchForm.testName">
+                            <el-option label="基于机器学习技术的多维度心理测试" value="machineLearningTestV1"></el-option>
+                          </el-select>
+                        </el-form-item>
+                        <el-form-item>
+                          <el-button type="primary" @click="searchForHistory">查询</el-button>
+                        </el-form-item>
+                    </el-form>
+                    <el-table :data="dataTable" stripe border style="width: 100%;">
+                      <el-table-column prop="id" label="测试ID" align="center"></el-table-column>
+                      <el-table-column prop="name" label="测试名称" align="center"></el-table-column>
+                      <el-table-column prop="date" label="测试时间" align="center"></el-table-column>
+                      <el-table-column label="操作" align="center">
+                        <template slot-scope="scope">
+                          <el-button size="mini" @click="loadHistoryById(scope.row)">查看问卷</el-button>
+                          <el-button size="mini" @click="showReport(scope.row)">查看报告</el-button>
+                          <el-button size="mini" type="danger" @click="deleteById(scope.row)">删除</el-button>
+                        </template>
+                      </el-table-column>
+                    </el-table>
+                </el-contain>
+
+                <!-- 个人信息管理界面 -->
+                <el-contain v-if="activeIndex == '3'" style="height: 100%; padding: 0; margin: 0;">
+                    <div style="margin: 20px auto; height: 500px; width: 30%; border: 1px solid black; padding: 20px; border-radius: 5%;">
+                        <h4 style="text-align: center; padding-bottom: 20px;">用户个人信息管理</h4>
+                        <el-form label-width="80px" size="mini">
+                            <el-form-item label="用户昵称">
+                              <el-input v-model="changeInformationForm.newNickname"></el-input>
+                            </el-form-item>
+                            <el-form-item label="年龄">
+                                <el-input-number v-model="changeInformationForm.currentAge" :min="8" :max="100" style="width: 100%;"></el-input-number>
+                            </el-form-item>
+                            <el-form-item label="手机号码">
+                                <el-input v-model="changeInformationForm.newPhoneNumber"></el-input>
+                            </el-form-item>
+                            <el-form-item label="电子邮箱">
+                                <el-input v-model="changeInformationForm.newEmail"></el-input>
+                            </el-form-item>
+                            <el-form-item label="年级">
+                                <el-input v-model="changeInformationForm.newEmail"></el-input>
+                            </el-form-item>
+                            <el-form-item label="学院">
+                                <el-input v-model="changeInformationForm.newEmail"></el-input>
+                            </el-form-item>
+                            <el-form-item label="专业">
+                                <el-input v-model="changeInformationForm.newEmail"></el-input>
+                            </el-form-item>
+                            <el-form-item label="个人描述">
+                                <el-input type="textarea" placeholder="请输入内容" v-model="changeInformationForm.description"></el-input>
+                            </el-form-item>
+                            <el-row style="text-align: center;">
+                                <el-button type="submit" @click="submitChangedInformation" size="mini">确认修改信息</el-button>
+                            </el-row>
+                        </el-form>
+                    </div>
+                </el-contain>
+
+                <el-contain v-if="activeIndex == '4'" style="height: 100%; padding: 0; margin: 0;">
+                  <el-row>
+                    <el-col :span="8" v-for="(item, index) in teacherList">
+                        <el-card :body-style="{ padding: '0px' }" style="text-align: center;">
+                            <el-image src="{{ url_for('static',filename='images/teacher.jpg') }}" style="height: 200px;"></el-image>
+                            <div style="padding: 14px;">
+                              <span>[[ item.name ]]老师([[ item.age ]]岁,从业[[ item.work_year ]]年)</span>
+                              <div style="display: flex; justify-content: space-around;">
+                                <el-button type="text" class="button" @click="askTeacher(item.id, 'plan')">立刻预约</el-button>
+                                <el-button type="text" class="button" @click="askTeacher(item.id, 'ask')">在线咨询</el-button>
+                                <el-button type="text" class="button" @click="checkTeacherDetail(item)">查看详细信息</el-button>
+                              </div>
+                            </div>
+                          </el-card>
+                    </el-col>
+                  </el-row>
+                </el-contain>
+
+                <!-- 心理咨询预约历史记录界面 -->
+                <el-container v-if="activeIndex == '5'">
+                    <el-table :data="appointment.appointmentRecord" stripe border style="width: 100%;">
+                        <el-table-column prop="appointmentID" label="心理咨询预约ID" align="center"></el-table-column>
+                        <el-table-column prop="teacherID" label="心理咨询师ID" align="center"></el-table-column>
+                        <el-table-column prop="date" label="预约日期" align="center"></el-table-column>
+                        <el-table-column prop="date" label="预约时间" align="center"></el-table-column>
+                        <el-table-column label="操作" align="center">
+                          <template slot-scope="scope">
+                            <el-button size="mini" type="primary" @click="change(scope.row)">更改预约</el-button>
+                            <el-button size="mini" type="danger" @click="deleteAppointment(scope.row)">取消预约</el-button>
+                          </template>
+                        </el-table-column>
+                    </el-table>
+                </el-container>
+
+            </el-main>
+        </el-container>
+
+        <el-dialog title="在线心理测评问卷" :visible.sync="inTest" v-model="testData" height="50%">
+            <el-container style="height: 100%; width: 100%; margin: 0 auto;">
+                <el-scrollbar>
+                    <el-form :http-request="submitTestData">
+                        <div v-for="(item, index) in testData">
+                            <div>测试问题 [[ index+1 ]]: [[ item.question ]]</div>
+                            <div style="font-size: 10px; color: red;" v-if="item.description">
+                                <p><b>注意：[[ item.description ]]</b></p>
+                            </div>
+                            <el-form-item>
+                            <el-select v-model="testData[index].userAnswer" placeholder="请选择您的答案">
+                                <el-option v-for="(answer,index) in item.answers" :value="index">[[ answer ]]</el-option>
+                            </el-select>
+                            </el-form-item>
+                        </div>
+                    </el-form>
+                </el-scrollbar>
+                <el-footer style="text-align: center;">
+                    <el-button type="primary" @click="submitTestData">提交问卷填写结果</el-button>
+                </el-footer>
+            </el-container>
+        </el-dialog>
+
+        <el-dialog :title="historyTestName" :visible.sync="checkHistory" v-model="testDataHistory" height="50%">
+            <el-container style="height: 100%; width: 100%; margin: 0 auto;">
+                <el-form>
+                    <div v-for="(item, index) in testDataHistory">
+                        <div>测试问题 [[ index+1 ]]: [[ item.question ]]</div>
+                        <div style="font-size: 10px; color: red;" v-if="item.description">
+                            <p><b>注意：[[ item.description ]]</b></p>
+                        </div>
+                        <el-form-item>
+                        <el-select v-model="testDataHistory[index].userAnswer" placeholder="请选择您的答案">
+                            <el-option v-for="(answer,index) in item.answers" :value="index">[[ answer ]]</el-option>
+                        </el-select>
+                        </el-form-item>
+                    </div>
+                </el-form>
+            </el-container>
+        </el-dialog>
+
+        <el-dialog title="提示" :visible.sync="changeTestPageDialogVisible" width="30%" :before-close="handleClose">
+            <span>该系统尚未支持更多心理测评项目哦~敬请期待</span>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="changeTestPageDialogVisible=false">取 消</el-button>
+                <el-button type="primary" @click="changeTestPageDialogVisible=false">确 定</el-button>
+            </span>
+        </el-dialog>
+
+        <el-dialog title="在线预约" :visible.sync="planDialogVisible" width="30%" >
+            <el-form inline="true">
+                <el-form-item>
+                    <el-date-picker v-model="planDate" type="date" placeholder="选择日期"></el-date-picker>
+                </el-form-item>
+                <el-form-item>
+                    <el-time-select v-model="planTime" :picker-options="{start: '08:30',step: '00:30',end: '18:30'}" placeholder="选择时间"></el-time-select>
+                </el-form-item>
+                <el-form-item>
+                    <el-button @click="makeAppointment">确定预约</el-button>
+                </el-form-item>
+            </el-form>
+        </el-dialog>
+
+        <el-dialog title="在线预约" :visible.sync="appointment.changeAppointmentDialogVisible" width="30%" >
+            <el-form inline="true">
+                <el-form-item>
+                    <el-date-picker v-model="planDate" type="date" placeholder="选择日期"></el-date-picker>
+                </el-form-item>
+                <el-form-item>
+                    <el-time-select v-model="planTime" :picker-options="{start: '08:30',step: '00:30',end: '18:30'}" placeholder="选择时间"></el-time-select>
+                </el-form-item>
+                <el-form-item>
+                    <el-button @click="changeAppointment">更改预约</el-button>
+                </el-form-item>
+            </el-form>
+        </el-dialog>
+
+        <el-dialog title="在线咨询" :visible.sync="askDialogVisible" width="30%">
+            <el-form>
+                <el-form-item>
+                    <el-input placeholder="输入您要咨询的内容" type="textarea" :rows="10" v-model="askContent"></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-button @click="sendEmail('ask')">发送咨询信息</el-button>
+                </el-form-item>
+            </el-form>
+        </el-dialog>
+
+        <el-dialog title="心理测评报告" :visible.sync="reportDialogVisible">
+            <div style="display: flex; flex-direction: column;">
+                <el-image 
+                 :src="currentImageScr"
+                 style="margin: 0 auto; width: 500px;;">
+                </el-image>
+                <p style="text-indent: 2em;">[[ currentText ]]</p>
+                <div>
+                    <el-button type="text" style="float: left;" @click="changeResultIndex(-1)">上一项心理测评指标</el-button>
+                    <el-button type="text" style="float: right;" @click="changeResultIndex(1)">下一项心理测评指标</el-button>
+                </div>
+            </div>
+        </el-dialog>
+
+        <el-dialog title="心理咨询师详细信息" :visible.sync="teacherDetailDialogVisible" size="mini">
+            <el-descriptions>
+                <el-descriptions-item label="姓名">[[ currentTeacher.name ]]</el-descriptions-item>
+                <el-descriptions-item label="学历">[[ currentTeacher.degree ]]</el-descriptions-item>
+                <el-descriptions-item label="邮箱">[[ currentTeacher.email ]]</el-descriptions-item>
+                <el-descriptions-item label="评分">[[ currentTeacher.score ]]</el-descriptions-item>
+                <el-descriptions-item label="擅长领域">
+                    <el-tag size="small">[[ currentTeacher.field ]]</el-tag>
+                </el-descriptions-item>
+            </el-descriptions>
+            <el-row style="text-align: center;">
+                <el-rate v-model="userScore"></el-rate>
+                <el-button @click="$message({message: '打分成功', type: 'success'})">
+                    为这位老师打分
+                </el-button>
+            </el-row>
+        </el-dialog>
+    </div>
+
+    <script>
+        new Vue({
+            el: "#vue-app", 
+            // 由于Vue和Jinja2框架的模板引擎重复,故对Vue的插值表达式进行重定义
+            delimiters: ["[[", "]]"], 
+            data() {
+                return {
+                    firstRender: true, 
+                    activeIndex: "1",
+                    changeTestPageDialogVisible: false, 
+                    inTest: false, 
+                    testData: {}, 
+                    currentTestName: "", 
+                    testingRecord: {}, 
+                    userScore: 0, 
+                    currentInformation: {
+                        account: "",  // 当前用户的账号
+                        password: "",  // 当前用户的密码
+                        nickname: "",  // 当前用户的昵称
+                        currentAge: "",  // 当前用户的年龄
+                        phoneNumber: "",  // 当前用户的手机号码
+                        email: "",  // 当前用户的电子邮箱
+                    },
+                    changeInformationForm: {
+                        newNickname: "",  // 用户新输入的昵称
+                        currentAge: "",  // 用户新输入的年龄
+                        newPassword: "",  // 用户新输入的密码
+                        newPasswordEnsure: "",  // 用户第二次输入的密码（用于二次确认）
+                        newPhoneNumber: "",  // 用户新输入的手机号
+                        newEmail: "",  // 用户新输入的电子邮箱
+                        description: "暂无个人描述哦~"  // 当前用户的自我描述
+                    },
+                    dataTable: [], // 历史记录数据
+                    checkHistory: false, 
+                    testDataHistory: {}, 
+                    historyTestName: "", 
+                    searchForm: {
+                        startDate: "",  // 查询的起始日期
+                        endDate: "",  // 查询的终止日期
+                        testName: "",  // 查询的项目名称
+                    },
+                    reportDialogVisible: false, 
+                    currentAnalysisText: "",
+                    imageScrList: [], 
+                    textList: [], 
+                    currentResultIndex: 0, 
+                    currentImageScr: "",
+                    currentText: "",
+                    planDialogVisible: false,
+                    planDate: "",
+                    planTime: "", 
+                    askDialogVisible: false, 
+                    askContent: "",
+                    teacherList: [{name:"",email:"",score:"",degree:"",field:""}], 
+                    teacherDetailDialogVisible: false, 
+                    currentTeacherIndex: 0, 
+                    askingTeacherId: "", 
+                    currentTeacher: {
+                        name: "",
+                        email: "",
+                        score: "", 
+                        field: "", 
+                        degree: "" 
+                    },
+                    appointment: {
+                        "appointmentRecord": [], 
+                        "appointmentTeacherID": "", 
+                        "changeAppointmentDialogVisible": false,
+                        "changeAppointmentID": "", 
+                    }
+                }
+            },
+
+            created() {
+                console.log("Hello Vue!"); 
+            },
+            methods: {
+                currentPageChange(key){
+                    this.activeIndex = key;
+                    if (this.activeIndex == '2'){
+                        this.getTestHistoryData();
+                    }
+                    else if (this.activeIndex == '4'){
+                        this.getTeacherList();
+                    }
+                    else if (this.activeIndex == '5'){
+                        console.log(111);
+                        this.loadAppointmentInformation();
+                    }
+                }, 
+
+                async loadCurrentUserInformation() {
+                    if (! this.firstRender) 
+                        // 使用Flask返回的模板界面貌似并不会执行Vue的created等生命周期方法
+                        // 本变量用来保证每次仅在页面加载的第一次查询数据库完整用户信息
+                        return;
+                    this.currentInformation.account = window.localStorage.getItem("account");
+                    console.log(this.currentInformation.account);
+                    const allInformationResponse = await axios.get("http://127.0.0.1:5000/getInformation?account="+this.currentInformation.account);
+                    console.log(allInformationResponse);
+                    this.currentInformation.nickname = allInformationResponse.data.nickname; 
+                    this.currentInformation.currentAge = allInformationResponse.data.currentAge;
+                    // 在更改用户信息的表单中对应更改相应元素 
+                    this.changeInformationForm.newNickname = allInformationResponse.data.nickname; 
+                    this.changeInformationForm.currentAge = allInformationResponse.data.currentAge;
+                    this.changeInformationForm.newPhoneNumber = allInformationResponse.data.phoneNumber;
+                    this.changeInformationForm.newEmail = allInformationResponse.data.email;
+                    if (allInformationResponse.data.description.length > 0)
+                        this.changeInformationForm.description = allInformationResponse.data.description;
+
+                    this.firstRender = false;
+                },
+
+                async submitChangedInformation(){
+                    // 向后端发送POST请求，修改个人信息
+                    let formData = new FormData();
+                    for (const key in this.changeInformationForm){
+                        if (this.changeInformationForm.hasOwnProperty(key))
+                            formData.append(key, this.changeInformationForm[key]);
+                    }
+                    formData.append("account", this.currentInformation.account);
+                    const response = await axios.post("http://127.0.0.1:5000/changeUserInformation", formData);
+                    if (response.data.success){
+                        this.$message({message: "个人信息更新成功", type: "success"});
+                        this.currentInformation.nickname = formData.newNickname;
+                        this.currentInformation.currentAge = formData.currentAge;
+                        this.currentInformation.phoneNumber = formData.newPhoneNumber;
+                        this.currentInformation.email = formData.newEmail;
+                    }
+                    else{
+                        this.$message({message: "个人信息更新失败,请稍后再试", type: "error"});
+                    }
+                },
+
+                // 获取心理测评问卷所需要的问卷数据(前端向后端发送GET请求)
+                async beginTesting(testName) {
+                    this.currentTestName = testName;
+                    const response = await axios.get("http://127.0.0.1:5000/beginTesting?testName="+testName)
+                    .then(response => {
+                        this.inTest = true; 
+                        this.testData = response.data.data; 
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        this.$message({message: "加载问卷数据时出现错误", type: "error"});
+                    })
+                },
+
+                // 向后端提交心理测评问卷数据填写结果(前端向后端发送POST请求)
+                async submitTestData() {
+                    // 使用POST请求将心理测评问卷数据发送给Flask后端
+                    this.inTest = false;
+                    this.$message({message: "问卷已经提交成功啦！", type: "success"});
+                    let testingResultData = new FormData();
+                    let userAnswers = []; 
+                    for (i = 0; i < this.testData.length; i++){
+                        currentAnswer = this.testData[i].userAnswer;
+                        // 若某个问卷数据项目还没有被填写,则不发送数据
+                        if (currentAnswer.length == 0){
+                            this.$message({message: "当前问卷还有空题未填写,请将其补全", type: "error"});
+                            return; 
+                        }
+                        userAnswers.push(this.testData[i].userAnswer);
+                    }
+                    testingResultData.append("answers", userAnswers); 
+                    testingResultData.append("testName", this.currentTestName);
+                    testingResultData.append("account", this.currentInformation.account);
+
+                    // 向服务器后端发送POST请求
+                    const response = await axios.post("http://127.0.0.1:5000/testingResult", testingResultData);
+                    if (response.data.success){
+                        this.$message({message: "计算结束~您可以在历史记录里面查询结果！", type: "success"});
+                    }
+                    else{
+                        this.$message({message: "出现故障了,请稍后再试！", type: "error"});
+                    }
+                },
+
+                async getTestHistoryData() {
+                    // 向后端发送GET请求，得到历史测试数据的表格 
+                    const response = await axios.get("http://127.0.0.1:5000/getHistory?account="+this.currentInformation.account)
+                    .then(response => {
+                        this.dataTable = response.data.dataTable;
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        this.$message({message: "加载问卷历史数据时出现错误", type: "error"});
+                        return []; 
+                    })
+                }, 
+
+                async showReport(row) {
+                    // 向后端发送GET请求,得到当前心理测评的结果
+                    testId = row.id; 
+                    account = this.currentInformation.account; 
+                    await axios.get("http://127.0.0.1:5000/getResult?account="+account+"&testid="+testId)
+                    .then(response => {
+                        if (!response.data.success){
+                            this.$message({message: "该记录的数据不存在哦~已将他自动删除！", type: "error"});
+                            this.deleteById(row);
+                            return
+                        }
+                        this.reportDialogVisible = true;
+                        this.textList = response.data.textList;
+                        this.imageScrList = response.data.imageScrList;
+                        this.currentResultIndex = 0;
+                        this.currentText = this.textList[this.currentResultIndex];
+                        this.currentImageScr = this.imageScrList[this.currentResultIndex];
+                    })
+                },
+
+                changeResultIndex(direction) {
+                    // 在查看心理测评结果的弹窗中查看上一个和下一个结果
+                    if (direction == -1){
+                        // 查看上一项心理测评指标
+                        if (this.currentResultIndex == 0){
+                            this.$message({message: "没有了哦~", type: "error"});
+                            return;
+                        }
+                        else{
+                            this.currentResultIndex -= 1; 
+                            this.currentText = this.textList[this.currentResultIndex];
+                            this.currentImageScr = this.imageScrList[this.currentResultIndex];
+                        }
+                    }
+                    else{
+                        // 查兰下一项心理测评指标
+                        if (this.currentResultIndex == this.textList.length - 1){
+                            this.$message({message: "没有了哦~", type: "error"});
+                            return;
+                        }
+                        else{
+                            this.currentResultIndex += 1; 
+                            this.currentText = this.textList[this.currentResultIndex];
+                            this.currentImageScr = this.imageScrList[this.currentResultIndex];
+                        }
+                    }
+                },
+
+                async loadHistoryById(row){
+                    // 向后端发送GET请求，得到当前某次问卷的历史填写结果
+                    let testId = row.id;
+                    console.log(testId);
+                    await axios.get("http://127.0.0.1:5000/searchHistoryDetails?testid="+testId+"&account="+this.currentInformation.account)
+                    .then(response => {
+                        this.testDataHistory = response.data.data;
+                        console.log(this.testDataHistory);
+                        this.historyTestName = response.data.name;
+                        this.checkHistory = true; 
+                    })
+                    .catch(error => {
+                        this.$message({message: "加载问卷历史数据时出现错误", type: "error"});
+                    })
+                },
+
+                async deleteById(row) {
+                    // 向后端发送POST请求，根据Id删除数据库里面的历史记录
+                    let deleteDataForm = new FormData();
+                    deleteDataForm.append("testid", row.id);
+                    await axios.post("http://127.0.0.1:5000/deleteById", deleteDataForm)
+                    .then(response => {
+                        if (response.data.success){
+                            this.$message({message: "删除成功", type: "success"});
+                            // 在前端视图上直接删除对应的行条目
+                            this.dataTable.splice(row.index, 1); 
+                        }
+                    })
+                    .catch(error => {
+                        this.$message({message: "删除失败，请稍后再试哦~", type: "error"});
+                    })
+                },
+
+                async getTeacherList() {
+                    await axios.get("http://127.0.0.1:5000/getTeacherList")
+                    .then(response => {
+                        this.teacherList = response.data.teacherList;
+                    })
+                    .catch(error => {this.$message({message: "数据加载错误", type: "error"});})
+                },
+
+                async searchForHistory() {
+                    // 向后端发送POST请求，得到历史测试数据的表格（受到一定条件限制）
+                    if (this.searchForm.endDate < this.searchForm.startDate){
+                        this.$message({message: "起始日期应当在截止日期之前哦~", type: "error"});
+                        return;
+                    }
+                    let searchFormData = new FormData();
+                    searchFormData.append("startDate", this.searchForm.startDate);
+                    searchFormData.append("endDate", this.searchForm.endDate);
+                    searchFormData.append("testName", this.searchForm.testName);
+                    searchFormData.append("account", this.currentInformation.account);
+                    const response = await axios.post("http://127.0.0.1:5000/searchHistory", searchFormData)
+                    .then(response => {
+                        this.dataTable = response.dataTable;
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        this.$message({message: "查询错误,请稍后再试", type: "error"});
+                        return []; 
+                    })
+                },
+
+                ensurePlan(){
+                    this.planDialogVisible = false;
+                    this.$message({message: "预约成功啦！记得准时赴约哦", type: "success"});
+                },
+
+                sendAskContent() {
+                    this.askDialogVisible = false;
+                    this.$message({message: "发送成功，请留意邮箱或短信，等待老师的回复~", type: "success"});
+                },
+
+                askTeacher(id, type) {
+                    if (type == "ask")
+                        this.askDialogVisible = true; 
+                    else
+                        this.planDialogVisible = true;
+                    this.askingTeacherId = id; 
+                },
+
+                checkTeacherDetail(teacher) {
+                    this.userScore = 0; 
+                    this.currentTeacher = teacher;
+                    this.teacherDetailDialogVisible = true; 
+                },
+
+                async loadAppointmentInformation() {
+                    // 向后端请求获取当前用户的全部心理咨询预约信息 
+                    await axios.get("http://127.0.0.1:5000/appointment/getAppointmentRecord?account="+this.currentInformation.account)
+                    .then(response => {
+                        if (response.data.success)
+                            this.appointment.appointmentRecord = response.data.appointmentRecord;
+                        else
+                            this.$message({message: "数据加载出错,请稍后再试！", type: "error"}); 
+                    })
+                    .catch(error => {
+                        console.log(error); 
+                        this.$message({message: "数据加载出错,请稍后再试！", type: "error"});
+                    })
+                }, 
+
+                async makeAppointment() {
+                    // 向后端发送POST请求,向心理咨询师预约
+                    let formData = new FormData();
+                    formData.append("appointmentTeacherID", this.askingTeacherId);
+                    formData.append("account", this.currentInformation.account);
+                    formData.append("appointmentDate", this.planDate);
+                    formData.append("appointmentTime", this.planTime);
+                    axios.post("http://127.0.0.1:5000/appointment/makeAppointment", formData)
+                    .then(response => {
+                        console.log(response);
+                        if (response.data.success)
+                            this.$message({message: "预约成功,请留意老师的邮箱回复~", type: "success"});
+                        else
+                            this.$message({message: "预约失败"+response.data.message, type: "error"});
+                    })
+                    .catch(error => {
+                        console.log(error); 
+                        this.$message({message: "预约失败", type: "error"});
+                    })
+                },
+
+                change(obj) {
+                    this.appointment.changeAppointmentDialogVisible = true;
+                    this.appointment.changeAppointmentID = obj.appointmentID;
+                },
+
+                async changeAppointment() {
+                    // 向后端发送请求更改当前心里预约信息 
+                    let formData = new FormData();
+                    formData.append("appointmentID", this.appointment.changeAppointmentID);
+                    formData.append("account", this.currentInformation.account);
+                    formData.append("date", this.planDate);
+                    formData.append("time", this.planTime);
+                    axios.post("http://127.0.0.1:5000/appointment/changeAppointment", formData)
+                    .then(response => {
+                        if (response.data.success)
+                            this.$message({message: "更改成功", type: "success"});
+                        else
+                            this.$message({message: "更改失败:"+response.data.message, type: "error"});
+                    })
+                },
+
+                async deleteAppointment(appointment) {
+                    // 向后端发送POST请求删除当前心理咨询预约信息
+                    let appointmentID = appointment.appointmentID; 
+                    let formData = new FormData();
+                    formData.append("appointmentID", appointmentID);
+                    formData.append("account", this.currentInformation.account);
+                    axios.post("http://127.0.0.1:5000/appointment/deleteAppointment", formData)
+                    .then(response => {
+                        if (response.data.success) {
+                            this.$message({message: "删除成功", type: "success"});
+                            this.appointment.appointmentRecord.splice(appointment.index, 1); 
+                        }
+                        else
+                            this.$message({message: "删除失败:"+response.data.message, type: "error"});
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        this.$message({message: "删除失败", type: "error"});
+                    })
+                }, 
+
+                async sendEmail(type) {
+                    this.askDialogVisible = false;
+                    this.planDialogVisible = false;
+                    this.$message({message: "正在发送消息", type: "success"});
+                    let formData = new FormData();
+                    formData.append("id", this.askingTeacherId);
+                    formData.append("account", this.currentInformation.account);
+                    if (type == 'plan'){
+                        // 预约线下心里咨询
+                        formData.append("type", "plan");
+                        formData.append("date", this.planDate);
+                        formData.append("time", this.planTime); 
+                        const response = await axios.post("http://127.0.0.1:5000/sendEmail", formData);
+                        if (response.data.success) {
+                            this.$message({message: "预约成功,请留意老师的邮箱回复！", type: "success"});
+                        }
+                        else {
+                            this.$message({message: "预约失败！", type: "error"});
+                        }
+                    }
+                    else if (type == "ask") {
+                        formData.append("type", "ask");
+                        formData.append("content", this.askContent);
+                        const response = await axios.post("http://127.0.0.1:5000/sendEmail", formData);
+                        if (response.data.success) {
+                            this.$message({message: "咨询成功,请留意老师的邮箱回复！", type: "success"});
+                        }
+                        else {
+                            this.$message({message: "预约失败！", type: "error"});
+                        }
+                    }
+                }
+            }, 
+        })
+    </script>
+</body>
+</html>

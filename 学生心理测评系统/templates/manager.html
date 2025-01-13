@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基于机器学习技术的学生心理测评系统: 管理系统页</title>
+    <!-- 引入ElementUI的样式库 -->
+    <link rel="stylesheet" href="{{ url_for('static',filename='element-ui/lib/theme-chalk/index.css') }}">
+    <!-- 通过源码引入Vue.js -->
+    <script src="{{ url_for('static',filename='vue.js') }}"></script>
+    <!-- 通过源码引入ElementUI的JavaScript代码库 -->
+    <script src="{{ url_for('static',filename='element-ui/lib/index.js') }}"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        *{
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div id="vue-app">
+        <div style="display: none;" v-if="firstRender">[[ loadUserInformationDataTable() ]]</div>
+        <el-container style="height: 100%; width: 100%; padding: 0; margin: 0;">
+            <el-header style="height: 20%; padding: 0; margin: 0;">
+                <el-container>
+                    <el-aside style="width: 80%; margin: 0; padding: 0; overflow-y: hidden;">
+                      <el-menu 
+                       :default-active="activeIndex" 
+                       class="el-menu-demo" 
+                       mode="horizontal" 
+                       @select="currentPageChange"
+                       background-color="#545c64"
+                       text-color="#fff"
+                       active-text-color="#ffd04b">
+                        <el-menu-item index="1">用户信息管理</el-menu-item>
+                        <el-menu-item index="2">心理咨询师管理</el-menu-item>
+                      </el-menu>
+                    </el-aside>
+                    <el-main style="border-bottom: 1px solid #d3d3d3; 
+                     margin: 0; 
+                     padding: 0;
+                     display: flex; 
+                     justify-content: center; 
+                     background-color: #545c64;">
+                        <el-button 
+                         type="text" 
+                         style="padding: 0; margin: 0; float: right; color: white;"
+                         v-model="currentInformation.nickname"
+                         @click="activeIndex='3'">
+                         Hello, 管理员
+                        </el-button>
+                        <!-- 退出登录的链接 -->
+                        <el-link 
+                         type="warning"
+                         type="text"
+                         style="padding: 0; margin: 0; margin-left: 10px; float: right; color: orange;"
+                         href="http://127.0.0.1:5000/">
+                         [退出登录]
+                        </el-link>
+                    </el-main>
+                </el-container>
+            </el-header>
+
+            <el-main style="padding: 0; margin: 0; height: 80%;">
+                <el-container v-if="activeIndex=='1'" style="padding: 0; margin: 0; display: flex; flex-direction: column;">
+                    <div><h5>当前用户总数：[[ nUsers ]]</h5></div>
+                    <el-table :data="userDataTable" stripe border style="width: 100%;">
+                        <el-table-column prop="account" label="账号名称" align="center"></el-table-column>
+                        <el-table-column prop="nickname" label="姓名" align="center"></el-table-column>
+                        <el-table-column prop="count" label="测评次数" align="center"></el-table-column>
+                        <el-table-column prop="phoneNumber" label="电话号码" align="center"></el-table-column>
+                        <el-table-column prop="email" label="邮箱" align="center"></el-table-column>
+                    </el-table>
+                </el-container>
+
+                <el-container v-if="activeIndex=='2'" style="padding: 0; margin: 0; display: flex; flex-direction: column;">
+                    <el-table :data="teacherList" stripe border style="width: 100%;">
+                        <el-table-column prop="id" label="ID" align="center"></el-table-column>
+                        <el-table-column prop="name" label="姓名" align="center"></el-table-column>
+                        <el-table-column prop="age" label="年龄" align="center"></el-table-column>
+                        <el-table-column prop="work_year" label="从业时间" align="center"></el-table-column>
+                        <el-table-column prop="email" label="邮箱" align="center"></el-table-column>
+                        <el-table-column label="操作" align="center">
+                            <template slot-scope="scope">
+                              <el-button size="mini" type="danger" @click="deleteTeacher(scope.row)">删除</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <div style="display: flex; align-items: center; justify-content: center;">
+                        <el-button type="primary" @click="addTeacherDialogVisible=true">添加</el-button>
+                    </div>
+                </el-container>
+            </el-main>
+        </el-container>
+
+        <el-dialog title="添加一个心理咨询师的信息" :visible.sync="addTeacherDialogVisible" width="40%">
+            <el-form v-model="registerForm" :http-request="register">
+                <el-form-item label="姓名" :label-width="formLabelWidth">
+                  <el-input v-model="newTeacherForm.name" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="年龄" :label-width="formLabelWidth">
+                    <el-input v-model="newTeacherForm.age" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="从业年龄" :label-width="formLabelWidth">
+                    <el-input v-model="newTeacherForm.workYear" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="手机号码" :label-width="formLabelWidth">
+                    <el-input v-model="newTeacherForm.phoneNumber" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="邮箱" :label-width="formLabelWidth">
+                    <el-input v-model="newTeacherForm.email" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="学历" :label-width="formLabelWidth">
+                    <el-input v-model="newTeacherForm.degree" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="擅长领域" :label-width="formLabelWidth">
+                    <el-input v-model="newTeacherForm.field" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-row><el-button type="submit" @click="addTeacher">立刻添加</el-button></el-row>
+            </el-form>
+          </el-dialog>
+    </div>
+    <script>
+        new Vue({
+            el: "#vue-app",
+            //Vue.js和Flask的模板引擎冲突,因此将Vue的模板语法修改
+            delimiters: ["[[", "]]"], 
+            data(){
+                return {
+                    firstRender: true, 
+                    activeIndex: "1", 
+                    nUsers: 0, 
+                    currentInformation: {
+                        managerName: "", 
+                    },
+                    userDataTable: [], // 全部用户的信息列表
+                    teacherList: [], 
+                    nTeachers: 0, 
+                    addTeacherDialogVisible: false, 
+                    newTeacherForm: {
+                        name: "", 
+                        age: "", 
+                        workYear: "", 
+                        email: "", 
+                        phoneNumber: "",
+                        degree: "", 
+                        field: ""
+                    }
+                }
+            },
+            methods: {
+                async currentPageChange(pageIndex){
+                    this.activeIndex = pageIndex;
+                    if (this.activeIndex == '2')
+                        this.getTeacherList();
+                }, 
+
+                async loadUserInformationDataTable() {
+                    // 向后端发送GET请求,得到全部的用户数据
+                    await axios.get("http://127.0.0.1:5000/getInformationForManager")
+                    .then(response => {
+                        this.userDataTable = response.data.userDataTable;
+                        this.nUsers = this.userDataTable.length;
+                    })
+                    .catch(error => {
+                        this.$message({message: "数据加载错误,请稍后再试", type: "error"});
+                    })
+                }, 
+
+                async getTeacherList() {
+                    await axios.get("http://127.0.0.1:5000/getTeacherList")
+                    .then(response => {
+                        this.teacherList = response.data.teacherList;
+                        this.nTeachers = this.teacherList.length;
+                    })
+                    .catch(error => {this.$message({message: "数据加载错误", type: "error"});})
+                },
+
+                async addTeacher(){ 
+                    let dataForm = new FormData();
+                    dataForm.append("name", this.newTeacherForm.name);
+                    dataForm.append("age", this.newTeacherForm.age);
+                    dataForm.append("workYear", this.newTeacherForm.workYear);
+                    dataForm.append("email", this.newTeacherForm.email);
+                    dataForm.append("phoneNumber", this.newTeacherForm.phoneNumber);
+                    dataForm.append("field", this.newTeacherForm.field);
+                    dataForm.append("degree", this.newTeacherForm.degree);
+                    await axios.post("http://127.0.0.1:5000/addTeacher", dataForm)
+                    .then(response => {
+                        if (response.data.success){
+                            this.$message({message: "数据添加成功!", type: "success"});
+                            this.getTeacherList();
+                            this.addTeacherDialogVisible = false;
+                        }
+                        else{
+                            this.$message({message: "数据添加失败!", type: "error"});
+                            this.addTeacherDialogVisible = false;
+                        }
+                    })
+                    .catch(error => {this.$message({
+                        message: "数据加载错误", type: "error"});
+                        this.addTeacherDialogVisible = false;
+                    })
+                }, 
+
+                async deleteTeacher(row) {
+                    let form = new FormData();
+                    form.append("id", row.id);
+                    await axios.post("http://127.0.0.1:5000/deleteTeacher", form)
+                    .then(response => {
+                        if (response.data.success){
+                            this.$message({message: "删除成功", type: "success"});
+                            this.getTeacherList();
+                        }
+                        else this.$message({message: "删除失败,请稍后再试", type: "error"});
+                    })
+                }
+            },
+        })
+    </script>
+</body>
+</html>
